@@ -27,6 +27,9 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
+    const db = client.db("eduelevateDB");
+    const classCollection = db.collection("classes");
+
     // jwt related api
     app.post("/jwt", async (req, res) => {
       const user = req.body;
@@ -34,6 +37,13 @@ async function run() {
         expiresIn: "1d",
       });
       res.send({ token });
+    });
+
+    // save a class
+    app.post("/classes", async (req, res) => {
+      const aClass = req.body;
+      const result = classCollection.insertOne(aClass);
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection
