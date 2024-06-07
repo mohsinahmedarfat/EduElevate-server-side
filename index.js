@@ -42,10 +42,10 @@ async function run() {
     // class related apis
 
     // get the classes
-    // app.get("/classes", async (req, res) => {
-    //   const result = await classCollection.find().toArray();
-    //   res.send(result);
-    // });
+    app.get("/classes", async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    });
 
     // // get a certain class
     // app.get("/classes/:id", async (req, res) => {
