@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -39,12 +39,36 @@ async function run() {
       res.send({ token });
     });
 
+    // class related apis
+
+    // get the classes
+    // app.get("/classes", async (req, res) => {
+    //   const result = await classCollection.find().toArray();
+    //   res.send(result);
+    // });
+
+    // // get a certain class
+    // app.get("/classes/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
+    //   const result = await classCollection.findOne(query);
+    //   res.send(result);
+    // });
+
     // save a class
     app.post("/classes", async (req, res) => {
       const aClass = req.body;
-      const result = classCollection.insertOne(aClass);
+      const result = await classCollection.insertOne(aClass);
       res.send(result);
     });
+
+    // delete a certain class
+    // app.delete("/classes/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
+    //   const result = await classCollection.deleteOne(query);
+    //   res.send(result);
+    // });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
