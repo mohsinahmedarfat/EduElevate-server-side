@@ -29,6 +29,7 @@ async function run() {
 
     const db = client.db("eduelevateDB");
     const classCollection = db.collection("classes");
+    const userCollection = db.collection("users");
 
     // jwt related api
     app.post("/jwt", async (req, res) => {
@@ -39,7 +40,27 @@ async function run() {
       res.send({ token });
     });
 
+    // user related apis
+    // ===========================================================================
+
+    // save a user data in db
+    app.put("/user", async (req, res) => {
+      const user = req.body;
+
+      const options = { upsert: true };
+      const query = { email: user?.email };
+      const updateDoc = {
+        $set: {
+          ...user,
+        },
+      };
+
+      const result = await userCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
     // class related apis
+    // ===========================================================================
 
     // get the classes
     app.get("/classes", async (req, res) => {
