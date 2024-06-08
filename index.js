@@ -43,12 +43,23 @@ async function run() {
     // user related apis
     // ===========================================================================
 
+    // get all users from db
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send();
+    });
+
     // save a user data in db
     app.put("/user", async (req, res) => {
       const user = req.body;
-
-      const options = { upsert: true };
       const query = { email: user?.email };
+
+      // check if user already exist in db
+      const isExist = userCollection.findOne(query);
+      if (isExist) return res.send(isExist);
+
+      // save user for the first time
+      const options = { upsert: true };
       const updateDoc = {
         $set: {
           ...user,
