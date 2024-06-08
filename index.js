@@ -62,6 +62,20 @@ async function run() {
       res.send(result);
     });
 
+    // update a certain class
+    app.put("/classes/:id", async (req, res) => {
+      const id = req.params.id;
+      const classData = req.body;
+
+      const filter = { _id: new ObjectId(id) };
+      const updateData = {
+        $set: classData,
+      };
+
+      const result = await classCollection.updateOne(filter, updateData);
+      res.send(result);
+    });
+
     // delete a certain class
     app.delete("/classes/:id", async (req, res) => {
       const id = req.params.id;
