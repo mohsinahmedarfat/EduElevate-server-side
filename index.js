@@ -49,6 +49,20 @@ async function run() {
       res.send(result);
     });
 
+    // get all users who requested to be a teacher
+    app.get("/teacher-requests", async (req, res) => {
+      const query = { status: "Pending" };
+      const result = await userCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // get a certain user by email
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await userCollection.findOne({ email });
+      res.send(result);
+    });
+
     // save a user data in db
     app.put("/user", async (req, res) => {
       const user = req.body;
@@ -58,7 +72,7 @@ async function run() {
       // check if user already exist in db
       const isExist = await userCollection.findOne(query);
       if (isExist) {
-        if (user.status === "Requested") {
+        if (user.status === "Pending") {
           const result = await userCollection.updateOne(query, {
             $set: {
               status: user?.status,
@@ -79,6 +93,38 @@ async function run() {
       };
 
       const result = await userCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
+    // update a user role to teacher
+    app.patch("/user/:id", async (req, res) => {
+      const id = req.params.id;
+      const user = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          ...user,
+          role: "teacher",
+          status: "Verified",
+        },
+      };
+      const result = await userCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    // update a user role to admin
+    app.patch("/user/:id", async (req, res) => {
+      const id = req.params.id;
+      const user = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          ...user,
+          role: "admin",
+          status: "Verified",
+        },
+      };
+      const result = await userCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
