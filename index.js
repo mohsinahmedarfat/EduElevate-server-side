@@ -25,7 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
     const db = client.db("eduelevateDB");
     const classCollection = db.collection("classes");
@@ -51,7 +51,7 @@ async function run() {
 
     // get all users who requested to be a teacher
     app.get("/teacher-requests", async (req, res) => {
-      const query = { status: "Pending" };
+      const query = { status: { $in: ["Pending", "Rejected", "Accepted"] } };
       const result = await userCollection.find(query).toArray();
       res.send(result);
     });
@@ -66,7 +66,6 @@ async function run() {
     // save a user data in db
     app.put("/user", async (req, res) => {
       const user = req.body;
-      console.log(user);
       const query = { email: user?.email };
 
       // check if user already exist in db
@@ -97,7 +96,25 @@ async function run() {
     });
 
     // update a user role to teacher
-    app.patch("/user/:id", async (req, res) => {
+    // change the url
+
+    // app.patch("/user/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const user = req.body;
+    //   const query = { _id: new ObjectId(id) };
+    //   const updateDoc = {
+    //     $set: {
+    //       ...user,
+    //       role: "teacher",
+    //       status: "Verified",
+    //     },
+    //   };
+    //   const result = await userCollection.updateOne(query, updateDoc);
+    //   res.send(result);
+    // });
+
+    // approve teacher request
+    app.patch("/teacher-approve/:id", async (req, res) => {
       const id = req.params.id;
       const user = req.body;
       const query = { _id: new ObjectId(id) };
@@ -105,7 +122,22 @@ async function run() {
         $set: {
           ...user,
           role: "teacher",
-          status: "Verified",
+          status: "Accepted",
+        },
+      };
+      const result = await userCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    // reject teacher request
+    app.patch("/teacher-reject/:id", async (req, res) => {
+      const id = req.params.id;
+      const user = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          ...user,
+          status: "Rejected",
         },
       };
       const result = await userCollection.updateOne(query, updateDoc);
@@ -121,7 +153,6 @@ async function run() {
         $set: {
           ...user,
           role: "admin",
-          status: "Verified",
         },
       };
       const result = await userCollection.updateOne(query, updateDoc);
