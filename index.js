@@ -95,25 +95,7 @@ async function run() {
       res.send(result);
     });
 
-    // update a user role to teacher
-    // change the url
-
-    // app.patch("/user/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const user = req.body;
-    //   const query = { _id: new ObjectId(id) };
-    //   const updateDoc = {
-    //     $set: {
-    //       ...user,
-    //       role: "teacher",
-    //       status: "Verified",
-    //     },
-    //   };
-    //   const result = await userCollection.updateOne(query, updateDoc);
-    //   res.send(result);
-    // });
-
-    // approve teacher request
+    // approve teacher request and update a user role to teacher
     app.patch("/teacher-approve/:id", async (req, res) => {
       const id = req.params.id;
       const user = req.body;
@@ -164,7 +146,8 @@ async function run() {
 
     // get the classes
     app.get("/classes", async (req, res) => {
-      const result = await classCollection.find().toArray();
+      const query = { status: "Accepted" };
+      const result = await classCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -173,6 +156,21 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await classCollection.findOne(query);
+      res.send(result);
+    });
+
+    // get classes for a certain user by email
+    app.get("/teacher-classes/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email, status: "Accepted" };
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // get all classes which requested from teacher
+    app.get("/class-requests", async (req, res) => {
+      const query = { status: { $in: ["Pending", "Rejected", "Accepted"] } };
+      const result = await classCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -194,6 +192,36 @@ async function run() {
       };
 
       const result = await classCollection.updateOne(filter, updateData);
+      res.send(result);
+    });
+
+    // approve class request
+    app.patch("/class-approve/:id", async (req, res) => {
+      const id = req.params.id;
+      const classData = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          ...classData,
+          status: "Accepted",
+        },
+      };
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    // reject class request
+    app.patch("/class-reject/:id", async (req, res) => {
+      const id = req.params.id;
+      const classData = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          ...classData,
+          status: "Rejected",
+        },
+      };
+      const result = await classCollection.updateOne(query, updateDoc);
       res.send(result);
     });
 
