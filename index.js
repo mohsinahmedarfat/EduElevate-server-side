@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -33,11 +34,12 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
     const db = client.db("eduelevateDB");
     const classCollection = db.collection("classes");
     const userCollection = db.collection("users");
+    const enrollmentCollection = db.collection("enrollments");
 
     // jwt related api
     app.post("/jwt", async (req, res) => {
@@ -46,6 +48,27 @@ async function run() {
         expiresIn: "1d",
       });
       res.send({ token });
+    });
+
+    // stripe payment related api
+    app.post("/create-payment-intent", async (req, res) => {
+      const price = req.body.price;
+      const priceInCent = parseFloat(price) * 100;
+
+      if (!price || priceInCent < 1) return;
+
+      // generate clientSecret
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: priceInCent,
+        currency: "usd",
+        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      // send client secret as response
+      res.send({ clientSecret: client_secret });
     });
 
     // user related apis
@@ -170,7 +193,7 @@ async function run() {
     // get classes for a certain user by email
     app.get("/teacher-classes/:email", async (req, res) => {
       const email = req.params.email;
-      const query = { email: email, status: "Accepted" };
+      const query = { email: email };
       const result = await classCollection.find(query).toArray();
       res.send(result);
     });
@@ -238,6 +261,23 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await classCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // ==============================================================================
+
+    // get enrolled classes for a certain user by email
+    app.get("/enrolled-classes/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await enrollmentCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // class enroll payment
+    app.post("/enroll", async (req, res) => {
+      const enrollData = req.body;
+      const result = await enrollmentCollection.insertOne(enrollData);
       res.send(result);
     });
 
