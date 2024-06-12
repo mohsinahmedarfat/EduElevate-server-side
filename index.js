@@ -207,7 +207,9 @@ async function run() {
 
     // save a class
     app.post("/classes", async (req, res) => {
-      const aClass = req.body;
+      let aClass = req.body;
+
+      aClass = { classId: new ObjectId(), ...aClass };
       const result = await classCollection.insertOne(aClass);
       res.send(result);
     });
@@ -266,6 +268,12 @@ async function run() {
 
     // ==============================================================================
 
+    // get all enrolled classes
+    app.get("/enrolledClasses", async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    });
+
     // get enrolled classes for a certain user by email
     app.get("/enrolled-classes/:email", async (req, res) => {
       const email = req.params.email;
@@ -274,10 +282,43 @@ async function run() {
       res.send(result);
     });
 
+    // get a certain enrolled class
+    app.get("/enrolled-class/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.findOne(query);
+      res.send(result);
+    });
+
     // class enroll payment
     app.post("/enroll", async (req, res) => {
       const enrollData = req.body;
       const result = await enrollmentCollection.insertOne(enrollData);
+      res.send(result);
+    });
+
+    // add a assignment
+    app.put("/add-assignment/:id", async (req, res) => {
+      const id = req.params.id;
+      let assignmentData = req.body;
+
+      assignmentData = { assignmentId: new ObjectId(), ...assignmentData };
+
+      console.log("[id]", id);
+      console.log("[assignmentData]", assignmentData);
+
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateData = {
+        $inc: { assignmentCount: 1 },
+        $push: { assignments: assignmentData },
+      };
+
+      const result = await classCollection.updateOne(
+        filter,
+        updateData,
+        options
+      );
       res.send(result);
     });
 
